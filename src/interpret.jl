@@ -53,5 +53,5 @@ enter(f, args...) = dummy_state([enter_call_expr(:($f($(args...))))])
 overdub(ctx, f, args...) = runall(ctx, enter(f, args...))
 
 macro overdub(ctx, ex)
-  overdub($(esc(ctx)), () -> $(esc(ex)))
+  :(overdub($(esc(ctx)), () -> $(esc(ex))))
 end
