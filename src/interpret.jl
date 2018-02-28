@@ -1,4 +1,5 @@
 using ASTInterpreter2
+using ASTInterpreter2: enter_call_expr
 using DebuggerFramework: execute_command, dummy_state
 
 isdone(state) = isempty(state.stack)
@@ -40,10 +41,10 @@ function runall(ctx, state)
   end
 end
 
+enter(f, args...) = dummy_state([ASTInterpreter2.enter_call_expr(:($f($(args...))))])
+
+overdub(ctx, f, args...) = runall(ctx, enter(f, args...))
+
 macro overdub(ctx, ex)
-  quote
-    f = () -> $(esc(ex))
-    state = dummy_state(@make_stack f())
-    runall($(esc(ctx)), state)
-  end
+  overdub($(esc(ctx)), () -> $(esc(ex)))
 end

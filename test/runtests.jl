@@ -1,4 +1,4 @@
-using Vinyl: @hook, @overdub
+using Vinyl: @hook, overdub
 using Base.Test
 
 mutable struct CountCtx
@@ -15,7 +15,7 @@ test(x) = sin(x)+cos(x)
 test2(x) = test(x) + test(x+1)
 
 ctx = CountCtx(0)
-@overdub ctx test2(5.0)
+overdub(ctx, test2, 5.0)
 @test ctx.count == 2
 
 end
