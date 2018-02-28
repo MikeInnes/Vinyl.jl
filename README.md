@@ -48,6 +48,8 @@ julia> prod([1,2,3,4,5])
 julia> sum([1,2,3,4,5])
 15
 
+julia> struct MulCtx end
+
 julia> @primitive MulCtx a * b = a + b
 
 julia> @overdub MulCtx() prod([1,2,3,4,5])
