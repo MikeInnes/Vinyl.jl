@@ -1,5 +1,6 @@
 using ASTInterpreter2
-using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr, do_assignment!
+using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
+  do_assignment!, lookup_var_if_var
 using DebuggerFramework: execute_command, dummy_state
 
 isdone(state) = isempty(state.stack)
@@ -17,16 +18,14 @@ step!(state) =
 stepin!(state) =
   execute_command(state, state.stack[state.level], Val{:s}(), "s")
 
-lookup(frame, x) = x
-lookup(frame, x::SSAValue) = frame.ssavalues[x.id+1]
-lookup(frame, x::SlotNumber) = get(frame.locals[x.id])
+lookup(frame, var) = lookup_var_if_var(frame, var)
+lookup(frame, x::QuoteNode) = x.value
 
 function callargs(state)
   ex = expr(state)
   isexpr(ex, :(=)) || return
   ex = ex.args[2]
   Meta.isexpr(ex, :call) || return
-  # TODO: may need to fix globalrefs, quotenodes etc
   lookup.(frame(state), ex.args)
 end
 
@@ -48,9 +47,11 @@ function runall(ctx, state)
   end
 end
 
-enter(f, args...) = dummy_state([enter_call_expr(:($f($(args...))))])
-
-overdub(ctx, f, args...) = runall(ctx, enter(f, args...))
+function overdub(ctx, f, args...)
+  frame = enter_call_expr(:($f($(args...))))
+  frame == nothing && return f(args...)
+  runall(ctx, dummy_state([frame]))
+end
 
 macro overdub(ctx, ex)
   :(overdub($(esc(ctx)), () -> $(esc(ex))))
