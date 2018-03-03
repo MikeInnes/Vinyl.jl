@@ -13,7 +13,7 @@ function expr(state)
 end
 
 step!(state) =
-  execute_command(state, state.stack[state.level], Val{:nc}(), "nc")
+  execute_command(state, state.stack[state.level], Val{:se}(), "se")
 
 stepin!(state) =
   execute_command(state, state.stack[state.level], Val{:s}(), "s")
@@ -29,22 +29,28 @@ function callargs(state)
   lookup.(frame(state), ex.args)
 end
 
+primitive_(ctx, state, a...) = primitive(ctx, a...)
+
+function provide_result!(state, x)
+  do_assignment!(frame(state), expr(state).args[1], x)
+  state.stack[1] = JuliaStackFrame(state.stack[1], JuliaProgramCounter(frame(state).pc.next_stmt+1))
+end
+
 function runall(ctx, state)
-  while true
+  while !isdone(state)
     if (ex = callargs(state)) ≠ nothing
       hook(ctx, ex...)
       if isprimitive(ctx, ex...)
-        result = primitive(ctx, ex...)
-        do_assignment!(frame(state), expr(state).args[1], result)
-        state.stack[1] = JuliaStackFrame(state.stack[1], JuliaProgramCounter(frame(state).pc.next_stmt+1))
+        result = primitive_(ctx, state, ex...)
+        provide_result!(state, result)
       else
         stepin!(state)
       end
     else
       step!(state)
     end
-    isdone(state) && return state.overall_result
   end
+  return state.overall_result
 end
 
 function overdub(ctx, f, args...)

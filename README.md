@@ -55,3 +55,35 @@ julia> @primitive MulCtx a * b = a + b
 julia> @overdub MulCtx() prod([1,2,3,4,5])
 15
 ```
+
+This package also includes an implementation of [delimited continuations](https://en.wikipedia.org/wiki/Delimited_continuation), because why not.
+
+```julia
+julia> using Vinyl: @reset, shift
+
+julia> @reset 2*shift(k -> k(k(4)))
+16
+
+julia> @reset begin
+         for i = 1:5
+           _ = shift(k -> (i,k(nothing)))
+         end
+         ()
+       end
+(1, (2, (3, (4, (5, ())))))
+
+# Hijack control flow
+julia> f(x) = length(x) > 10 ? :big : :small
+
+julia> struct FakeArray end
+julia> Base.length(::FakeArray) = shift(k -> k)
+
+julia> k = @reset f(FakeArray())
+Continuation()
+
+julia> k(5)
+:(:small)
+
+julia> k(15)
+:(:big)
+```

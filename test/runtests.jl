@@ -1,4 +1,4 @@
-using Vinyl: overdub, @hook, @primitive
+using Vinyl: overdub, @overdub, @hook, @primitive
 using Base.Test
 
 mutable struct CountCtx
@@ -14,6 +14,8 @@ struct SinCtx end
 
 @testset "Vinyl" begin
 
+@test @overdub(nothing,sum([1,2,3])) == 6
+
 test(x) = sin(x)+cos(x)
 test2(x) = test(x) + test(x+1)
 
@@ -22,5 +24,7 @@ overdub(ctx, test2, 5.0)
 @test ctx.count == 2
 
 @test overdub(SinCtx(), test, 5) == cos(5)-1
+
+include("continuations.jl")
 
 end
