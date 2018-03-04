@@ -42,8 +42,22 @@ f() # ("page1", "page2")
 
 # ---------------------------------------------------------------------------- #
 
-# Hijacking Julia's control flow; we can explore both branches of
-# an `if` statement.
+# What if Julia didn't have exceptions?
+
+throwit(x) = (_ = shift(_ -> x))
+
+function wrong()
+  println("You'll see this")
+  _ = throwit(ErrorException("An error occured!"))
+  println("You won't see this")
+end
+
+x = @reset wrong()
+
+# ---------------------------------------------------------------------------- #
+
+# Hijacking Julia's control flow; we can explore both branches of an `if`
+# statement.
 
 quantum_predicate() = shift(k -> (k(true), k(false)))
 
