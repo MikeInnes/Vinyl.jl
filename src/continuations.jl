@@ -24,7 +24,7 @@ end
 
 Base.show(io::IO, ::Continuation) = print(io, "Continuation()")
 
-function (c::Continuation)(x)
+function (c::Continuation)(x = nothing)
   st = copy_stack(c.st)
   provide_result!(st, x)
   reset_(() -> runall(Continuations(), st))
