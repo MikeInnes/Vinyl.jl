@@ -1,6 +1,6 @@
 using ASTInterpreter2
 using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
-  do_assignment!, lookup_var_if_var
+  do_assignment!, lookup_var_if_var, pc_expr
 using DebuggerFramework: execute_command, dummy_state
 
 isdone(state) = isempty(state.stack)
@@ -9,7 +9,7 @@ frame(state) = state.stack[state.level]
 
 function expr(state)
   fr = frame(state)
-  expr = ASTInterpreter2.pc_expr(fr, fr.pc)
+  expr = pc_expr(fr, fr.pc)
 end
 
 step!(state) =
@@ -36,6 +36,10 @@ function provide_result!(state, x)
   state.stack[1] = JuliaStackFrame(state.stack[1], JuliaProgramCounter(frame(state).pc.next_stmt+1))
 end
 
+unwrap(x) = x
+unwrap(x::QuoteNode) = x.value
+unwrap(x::Expr) = isexpr(x,:copyast) ? unwrap(x.args[1]) : x
+
 function runall(ctx, state)
   while !isdone(state)
     if (ex = callargs(state)) ≠ nothing
@@ -50,7 +54,7 @@ function runall(ctx, state)
       step!(state)
     end
   end
-  return state.overall_result
+  return unwrap(state.overall_result)
 end
 
 function overdub(ctx, f, args...)
