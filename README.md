@@ -72,18 +72,14 @@ julia> @reset begin
        end
 (1, (2, (3, (4, (5, ())))))
 
-# Hijack control flow
-julia> f(x) = length(x) > 10 ? :big : :small
+# Hijack control flow and explore multiple branches
+julia> quantum_predicate(x) = shift(k -> (k(true), k(false)))
 
-julia> struct FakeArray end
-julia> Base.length(::FakeArray) = shift(k -> k)
+julia> function foo(x)
+         quantum_predicate(x) && (x = x .+ 2)
+         2.*x
+       end
 
-julia> k = @reset f(FakeArray())
-Continuation()
-
-julia> k(5)
-:(:small)
-
-julia> k(15)
-:(:big)
+julia> k = @reset foo([1,2,3])
+([6, 8, 10], [2, 4, 6])
 ```
