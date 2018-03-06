@@ -25,7 +25,9 @@ function callargs(state)
   ex = expr(state)
   isexpr(ex, :(=)) && (ex = ex.args[2])
   isexpr(ex, :call) || return
-  lookup.(frame(state), ex.args)
+  args = lookup.(frame(state), ex.args)
+  args[1] == Core._apply && (args = [args[2], Iterators.flatten(args[3:end])...])
+  return args
 end
 
 primitive_(ctx, state, a...) = primitive(ctx, a...)
@@ -45,7 +47,7 @@ function runall(ctx, state)
       hook(ctx, ex...)
       if isprimitive(ctx, ex...)
         result = primitive_(ctx, state, ex...)
-        provide_result!(state, result)
+        isexpr(expr(state), :(=)) && provide_result!(state, result)
       else
         stepin!(state)
       end

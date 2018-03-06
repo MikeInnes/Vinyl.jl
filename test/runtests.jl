@@ -38,4 +38,6 @@ end
 
 @test sincount(unused) == 1
 
+@test sincount(() -> sin((0.,)...)) == 1
+
 end
