@@ -34,6 +34,9 @@ primitive_(ctx, state, a...) = primitive(ctx, a...)
 
 function provide_result!(state, x)
   do_assignment!(frame(state), expr(state).args[1], x)
+end
+
+function inc_pc!(state)
   state.stack[1] = JuliaStackFrame(state.stack[1], JuliaProgramCounter(frame(state).pc.next_stmt+1))
 end
 
@@ -48,6 +51,7 @@ function runall(ctx, state)
       if isprimitive(ctx, ex...)
         result = primitive_(ctx, state, ex...)
         isexpr(expr(state), :(=)) && provide_result!(state, result)
+        inc_pc!(state)
       else
         stepin!(state)
       end
