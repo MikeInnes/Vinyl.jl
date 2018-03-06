@@ -9,6 +9,12 @@ end
   c.count += 1
 end
 
+function sincount(f, args...)
+  ctx = CountCtx(0)
+  overdub(ctx, f, args...)
+  return ctx.count
+end
+
 struct SinCtx end
 @primitive SinCtx sin(x) = -1
 
@@ -19,12 +25,17 @@ struct SinCtx end
 test(x) = sin(x)+cos(x)
 test2(x) = test(x) + test(x+1)
 
-ctx = CountCtx(0)
-overdub(ctx, test2, 5.0)
-@test ctx.count == 2
+@test sincount(test2, 5.0) == 2
 
 @test overdub(SinCtx(), test, 5) == cos(5)-1
 
 include("continuations.jl")
+
+function unused()
+  sin(0.)
+  return
+end
+
+@test sincount(unused) == 1
 
 end

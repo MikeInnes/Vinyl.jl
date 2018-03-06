@@ -23,9 +23,8 @@ lookup(frame, x::QuoteNode) = x.value
 
 function callargs(state)
   ex = expr(state)
-  isexpr(ex, :(=)) || return
-  ex = ex.args[2]
-  Meta.isexpr(ex, :call) || return
+  isexpr(ex, :(=)) && (ex = ex.args[2])
+  isexpr(ex, :call) || return
   lookup.(frame(state), ex.args)
 end
 

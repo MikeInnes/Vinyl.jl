@@ -26,7 +26,7 @@ f(x) = length(x) > 10 ? :big : :small
 k = @reset f(FakeArray())
 
 # see #2
-@test k(5) == QuoteNode(:small)
-@test k(15) == QuoteNode(:big)
+@test k(5) == :small
+@test k(15) == :big
 
 end
