@@ -15,12 +15,12 @@ end
 
 macro primitive(ctx, f)
   def = splitdef(f)
-  f, args, body, ps = def[:name], def[:args], def[:body], def[:whereparams]
+  f, args, kwargs, body, ps = def[:name], def[:args], def[:kwargs], def[:body], def[:whereparams]
   ctx isa Symbol && (ctx = :(::$ctx))
   isexpr(f, :(::)) || (f = :(::typeof($f)))
   quote
-    Vinyl.isprimitive($(esc(ctx)), $(esc(f)), $(esc.(args)...)) where {$(esc.(ps)...)} = true
-    function Vinyl.primitive($(esc(ctx)), $(esc(f)), $(esc.(args)...)) where {$(esc.(ps)...)}
+    Vinyl.isprimitive($(esc(ctx)), $(esc(f)), $(esc.(args)...); $(esc.(kwargs)...)) where {$(esc.(ps)...)} = true
+    function Vinyl.primitive($(esc(ctx)), $(esc(f)), $(esc.(args)...); $(esc.(kwargs)...)) where {$(esc.(ps)...)}
       $(esc(body))
     end
   end
