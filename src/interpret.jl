@@ -44,19 +44,27 @@ unwrap(x) = x
 unwrap(x::QuoteNode) = x.value
 unwrap(x::Expr) = isexpr(x,:copyast) ? unwrap(x.args[1]) : x
 
+meth(x) = x.meth
+
 function runall(ctx, state)
   while !isdone(state)
-    if (ex = callargs(state)) ≠ nothing
-      hook(ctx, ex...)
-      if isprimitive(ctx, ex...)
-        result = primitive_(ctx, state, ex...)
-        isexpr(expr(state), :(=)) && provide_result!(state, result)
-        inc_pc!(state)
+    try
+      if (ex = callargs(state)) ≠ nothing
+        hook(ctx, ex...)
+        if isprimitive(ctx, ex...)
+          result = primitive_(ctx, state, ex...)
+          isexpr(expr(state), :(=)) && provide_result!(state, result)
+          inc_pc!(state)
+        else
+          stepin!(state)
+        end
       else
-        stepin!(state)
+        step!(state)
       end
-    else
-      step!(state)
+    catch err
+      println("Error from: ")
+      println.(meth.(state.stack))
+      rethrow(err)
     end
   end
   return unwrap(state.overall_result)
