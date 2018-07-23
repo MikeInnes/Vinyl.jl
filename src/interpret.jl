@@ -1,7 +1,7 @@
 using ASTInterpreter2
 using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
   do_assignment!, lookup_var_if_var, pc_expr
-using DebuggerFramework: execute_command, dummy_state
+using DebuggerFramework: execute_command, dummy_state, print_locdesc
 
 isdone(state) = isempty(state.stack)
 
@@ -62,9 +62,16 @@ function runall(ctx, state)
         step!(state)
       end
     catch err
-      println("Error from: ")
-      println.(meth.(state.stack))
-      rethrow(err)
+      Base.with_output_color(Base.have_color? Base.error_color() : nothing,
+        STDERR) do io
+          showerror(io, err)
+      end
+      println(STDERR, "\nStacktrace:")
+      for (num, frame) in enumerate(state.stack)
+          print(STDERR, "[$num] ")
+          print_locdesc(STDERR, frame)
+      end
+      return
     end
   end
   return unwrap(state.overall_result)
