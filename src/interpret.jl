@@ -3,6 +3,11 @@ using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
   do_assignment!, lookup_var_if_var, pc_expr
 using DebuggerFramework: execute_command, dummy_state, print_locdesc
 
+struct InterpreterError <: Exception
+  err
+  trace
+end
+
 isdone(state) = isempty(state.stack)
 
 frame(state) = state.stack[state.level]
@@ -62,16 +67,7 @@ function runall(ctx, state)
         step!(state)
       end
     catch err
-      Base.with_output_color(Base.have_color? Base.error_color() : nothing,
-        STDERR) do io
-          showerror(io, err)
-      end
-      println(STDERR, "\nStacktrace:")
-      for (num, frame) in enumerate(state.stack)
-          print(STDERR, "[$num] ")
-          print_locdesc(STDERR, frame)
-      end
-      return
+      throw(InterpreterError(err, state.stack))
     end
   end
   return unwrap(state.overall_result)
@@ -85,4 +81,13 @@ end
 
 macro overdub(ctx, ex)
   :(overdub($(esc(ctx)), () -> $(esc(ex))))
+end
+
+function Base.showerror(io::IOContext, ierr::InterpreterError)
+  showerror(io, ierr.err)
+  println(io, "\nStacktrace of evaluated expression:")
+  for (num, frame) in enumerate(ierr.trace)
+      print(io, "[$num] ")
+      print_locdesc(io, frame)
+  end
 end
