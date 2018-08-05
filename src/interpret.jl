@@ -6,6 +6,9 @@ using DebuggerFramework: execute_command, dummy_state, print_locdesc
 struct InterpreterError <: Exception
   err
   trace
+
+  InterpreterError(ierr::InterpreterError, stack) = new(ierr.err, vcat(ierr.trace, stack))
+  InterpreterError(err::Exception, stack) = new(err, stack)
 end
 
 isdone(state) = isempty(state.stack)
