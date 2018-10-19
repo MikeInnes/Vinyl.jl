@@ -1,6 +1,6 @@
 using ASTInterpreter2
 using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
-  do_assignment!, lookup_var_if_var, pc_expr
+  do_assignment!, lookup_var_if_var, pc_expr, isassign, getlhs
 using DebuggerFramework: execute_command, dummy_state, print_locdesc
 
 struct InterpreterError <: Exception
@@ -8,7 +8,7 @@ struct InterpreterError <: Exception
   trace
 
   InterpreterError(ierr::InterpreterError, stack) = new(ierr.err, vcat(ierr.trace, stack))
-  InterpreterError(err::Exception, stack) = new(err, stack)
+  InterpreterError(err, stack) = new(err, stack)
 end
 
 isdone(state) = isempty(state.stack)
@@ -18,6 +18,8 @@ frame(state) = state.stack[state.level]
 function expr(state)
   fr = frame(state)
   expr = pc_expr(fr, fr.pc)
+  isassign(fr) || return expr
+  Expr(:(=), getlhs(fr.pc), expr)
 end
 
 step!(state) =

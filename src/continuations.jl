@@ -1,7 +1,7 @@
 using DebuggerFramework: DebuggerState
 
 copy_stack(st::JuliaStackFrame) =
-  JuliaStackFrame(st.meth, st.code, copy(st.locals), copy(st.ssavalues),
+  JuliaStackFrame(st.meth, st.code, copy(st.locals), copy(st.ssavalues), st.used,
                   st.sparams, st.exception_frames, st.last_exception, st.pc,
                   st.last_reference, st.wrapper, st.generator, st.fullpath)
 
@@ -13,8 +13,10 @@ copy_stack(st::DebuggerState) =
 function reset_(f)
   try f()
   catch e
-    e isa Tuple{Any,Continuation} || rethrow()
-    return e[1](e[2])
+    e isa InterpreterError || rethrow()
+    p = e.err
+    p isa Tuple{Any,Continuation} || rethrow()
+    return p[1](p[2])
   end
 end
 
@@ -27,6 +29,7 @@ Base.show(io::IO, ::Continuation) = print(io, "Continuation()")
 function (c::Continuation)(x = nothing)
   st = copy_stack(c.st)
   provide_result!(st, x)
+  inc_pc!(st)
   reset_(() -> runall(Continuations(), st))
 end
 

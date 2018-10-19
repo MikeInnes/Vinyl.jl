@@ -1,5 +1,5 @@
 using Vinyl: @reset, shift
-using Base.Test
+using Test
 
 struct FakeArray end
 Base.length(::FakeArray) = shift(k -> k)
