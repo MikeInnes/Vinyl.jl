@@ -35,7 +35,7 @@ function callargs(state)
   ex = expr(state)
   isexpr(ex, :(=)) && (ex = ex.args[2])
   isexpr(ex, :call) || return
-  args = lookup.(frame(state), ex.args)
+  args = lookup.(Ref(frame(state)), ex.args)
   args[1] == Core._apply && (args = [args[2], Iterators.flatten(args[3:end])...])
   return args
 end
