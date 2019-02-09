@@ -1,6 +1,6 @@
 using ASTInterpreter2
 using ASTInterpreter2: JuliaStackFrame, JuliaProgramCounter, enter_call_expr,
-  do_assignment!, lookup_var_if_var, pc_expr, isassign, getlhs
+  do_assignment!, @lookup, pc_expr, isassign, getlhs
 using DebuggerFramework: execute_command, dummy_state, print_locdesc
 
 struct InterpreterError <: Exception
@@ -14,12 +14,13 @@ end
 isdone(state) = isempty(state.stack)
 
 frame(state) = state.stack[state.level]
+pc(frame) = frame.pc[]
 
 function expr(state)
   fr = frame(state)
-  expr = pc_expr(fr, fr.pc)
+  expr = pc_expr(fr, pc(fr))
   isassign(fr) || return expr
-  Expr(:(=), getlhs(fr.pc), expr)
+  Expr(:(=), getlhs(pc(fr)), expr)
 end
 
 step!(state) =
@@ -28,7 +29,7 @@ step!(state) =
 stepin!(state) =
   execute_command(state, state.stack[state.level], Val{:s}(), "s")
 
-lookup(frame, var) = lookup_var_if_var(frame, var)
+lookup(frame, var) = @lookup(frame, var)
 lookup(frame, x::QuoteNode) = x.value
 
 function callargs(state)
@@ -47,14 +48,13 @@ function provide_result!(state, x)
 end
 
 function inc_pc!(state)
-  state.stack[1] = JuliaStackFrame(state.stack[1], JuliaProgramCounter(frame(state).pc.next_stmt+1))
+  fr = frame(state)
+  state.stack[1] = JuliaStackFrame(fr, JuliaProgramCounter(pc(fr).next_stmt+1))
 end
 
 unwrap(x) = x
 unwrap(x::QuoteNode) = x.value
 unwrap(x::Expr) = isexpr(x,:copyast) ? unwrap(x.args[1]) : x
-
-meth(x) = x.meth
 
 function runall(ctx, state)
   while !isdone(state)

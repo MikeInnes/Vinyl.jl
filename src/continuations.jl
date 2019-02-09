@@ -1,9 +1,9 @@
 using DebuggerFramework: DebuggerState
 
 copy_stack(st::JuliaStackFrame) =
-  JuliaStackFrame(st.meth, st.code, copy(st.locals), copy(st.ssavalues), st.used,
-                  st.sparams, st.exception_frames, st.last_exception, st.pc,
-                  st.last_reference, st.wrapper, st.generator, st.fullpath)
+  JuliaStackFrame(st.code, copy(st.locals), copy(st.ssavalues),
+                  st.sparams, st.exception_frames, st.last_exception, Ref(st.pc[]),
+                  st.last_reference, st.callargs)
 
 copy_stack(st::DebuggerState) =
   DebuggerState(copy_stack.(st.stack), st.level, st.repl, st.main_mode,
