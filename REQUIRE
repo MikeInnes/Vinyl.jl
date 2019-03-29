@@ -1,4 +1,4 @@
-julia 0.6
-ASTInterpreter2
+julia 0.7+
+JuliaInterpreter
 MacroTools
-DebuggerFramework
+Debugger
