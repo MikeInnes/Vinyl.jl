@@ -1,5 +1,5 @@
 using Vinyl: @reset, shift
-using Base.Test
+using Test
 
 struct FakeArray end
 Base.length(::FakeArray) = shift(k -> k)
@@ -17,7 +17,7 @@ k = @reset shift(k -> k)+5
 # TODO fix #1
 @reset begin
   for i = 1:2
-    _ = shift(k -> (i,k()))
+    x = shift(k -> (i,k()))
   end
   ()
 end

@@ -1,5 +1,5 @@
 using Vinyl: overdub, @overdub, @hook, @primitive
-using Base.Test
+using Test
 
 mutable struct CountCtx
   count

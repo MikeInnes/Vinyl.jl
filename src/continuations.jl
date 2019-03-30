@@ -1,20 +1,29 @@
-using DebuggerFramework: DebuggerState
+using Debugger: DebuggerState
 
-copy_stack(st::JuliaStackFrame) =
-  JuliaStackFrame(st.meth, st.code, copy(st.locals), copy(st.ssavalues),
-                  st.sparams, st.exception_frames, st.last_exception, st.pc,
-                  st.last_reference, st.wrapper, st.generator, st.fullpath)
+copy_stack(::Nothing) = nothing
+
+copy_stack(fd::FrameData) =
+  FrameData(copy(fd.locals), copy(fd.ssavalues), copy(fd.sparams),
+  fd.exception_frames, fd.last_exception, fd.last_reference,
+  fd.callargs)
+
+copy_stack(st::Frame) =
+  Frame(st.framecode, copy_stack(st.framedata),
+  st.pc, copy_stack(st.caller), st.callee)
 
 copy_stack(st::DebuggerState) =
-  DebuggerState(copy_stack.(st.stack), st.level, st.repl, st.main_mode,
-                st.language_modes, st.standard_keymap, st.terminal,
-                st.overall_result)
+  DebuggerState(copy_stack(st.frame), st.level, st.broke_on_error,
+  st.watch_list, st.lowered_status, st.mode,
+  st.repl, st.terminal, st.main_mode,
+  st.julia_prompt, st.standard_keymap, st.overall_result)
 
 function reset_(f)
   try f()
   catch e
-    e isa Tuple{Any,Continuation} || rethrow()
-    return e[1](e[2])
+    e isa InterpreterError || rethrow()
+    p = e.err
+    p isa Tuple{Any,Continuation} || rethrow()
+    return p[1](p[2])
   end
 end
 
@@ -27,6 +36,7 @@ Base.show(io::IO, ::Continuation) = print(io, "Continuation()")
 function (c::Continuation)(x = nothing)
   st = copy_stack(c.st)
   provide_result!(st, x)
+  inc_pc!(st)
   reset_(() -> runall(Continuations(), st))
 end
 
