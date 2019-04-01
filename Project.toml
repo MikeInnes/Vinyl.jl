@@ -1,5 +1,5 @@
 name = "Vinyl"
-uuid = "84eda662-531b-11e9-02e3-19e89b7f4ee6"
+uuid = "83e47e11-4a7a-5bf8-892c-11f81bf9b223"
 
 [deps]
 Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
