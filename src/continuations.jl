@@ -4,12 +4,12 @@ copy_stack(::Nothing) = nothing
 
 copy_stack(fd::FrameData) =
   FrameData(copy(fd.locals), copy(fd.ssavalues), copy(fd.sparams),
-  fd.exception_frames, fd.last_exception, fd.last_reference,
-  fd.callargs)
+  fd.exception_frames, fd.last_exception, fd.caller_will_catch_err,
+  fd.last_reference, fd.callargs)
 
 copy_stack(st::Frame) =
   Frame(st.framecode, copy_stack(st.framedata),
-  st.pc, copy_stack(st.caller), st.callee)
+  st.pc, st.assignment_counter, copy_stack(st.caller), st.callee)
 
 copy_stack(st::DebuggerState) =
   DebuggerState(copy_stack(st.frame), st.level, st.broke_on_error,

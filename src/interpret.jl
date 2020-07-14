@@ -1,6 +1,6 @@
 using JuliaInterpreter
 using JuliaInterpreter: Frame, FrameData, enter_call_expr,
-  do_assignment!, @lookup, pc_expr, isassign, getlhs, caller, traverse
+  do_assignment!, @lookup, pc_expr, isassign, SSAValue, caller, traverse
 using Debugger: execute_command, DebuggerState, print_locals, active_frame, print_frame
 
 struct InterpreterError <: Exception
@@ -19,7 +19,7 @@ function expr(state)
   fr = frame(state)
   expr = pc_expr(fr, pc(fr))
   isassign(fr) || return expr
-  Expr(:(=), getlhs(pc(fr)), expr)
+  Expr(:(=), SSAValue(pc(fr)), expr)
 end
 
 step!(state) =
@@ -31,13 +31,21 @@ stepin!(state) =
 lookup(frame, var) = @lookup(frame, var)
 lookup(frame, x::QuoteNode) = x.value
 
+function interpret_builtin(args)
+  args[1] == Core._apply && return [args[2], Iterators.flatten(args[3:end])...]
+  @static isdefined(Core, :_apply_iterate) &&
+  args[1] == Core._apply_iterate &&
+  (args[2] == Core.iterate || args[2] == Core.Compiler.iterate || args[2] == Base.iterate) &&
+  return [args[3], Iterators.flatten(args[4:end])...]
+  return args
+end
+
 function callargs(state)
   ex = expr(state)
   isexpr(ex, :(=)) && (ex = ex.args[2])
   isexpr(ex, :call) || return
   args = lookup.(Ref(frame(state)), ex.args)
-  args[1] == Core._apply && (args = [args[2], Iterators.flatten(args[3:end])...])
-  return args
+  return interpret_builtin(args)
 end
 
 primitive_(ctx, state, a...) = primitive(ctx, a...)
